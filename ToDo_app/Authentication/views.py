@@ -30,20 +30,26 @@ class RegistrationView(View):
                 if len(password) < 8:
                     messages.error(request, "Password should be 8 charecter long")
                     return render(request, "authentication/register.html", context)
+                else:
+                    # new nuser creation process
+                    try:
+                        # adding user to data base
+                        user = User.objects.create_user(username=username, email=email)
+                        user.set_password(password)
+                        user.save()
+                        transaction.commit()
+                        messages.success(request, "Account created")
+                    except Exception as e:
+                        messages.error(request, f"Server - Database warning {str(e)}")
+                        transaction.rollback()
+            else:
+                messages.error(request, "Email already exists")
+                return render(request, "authentication/register.html", context)
+        else:
+            messages.error(request, "User name already exists")
+            return render(request, "authentication/register.html", context)
 
-                # new nuser creation process
-                try:
-                    # adding user to data base
-                    user = User.objects.create_user(username=username, email=email)
-                    user.set_password(password)
-                    user.save()
-                    transaction.commit()
-                    messages.success(request, "Account created")
-                except Exception as e:
-                    messages.error(request, f"Server - Database warning {str(e)}")
-                    transaction.rollback()
-
-        return render(request, "authentication/register.html", context)
+        return redirect("login")
 
 
 class UserLoginView(View):
